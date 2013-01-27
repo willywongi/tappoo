@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="http://yui.yahooapis.com/3.7.3/build/yui/yui-min.js"></script>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="format-detection" content="telephone=no" />
+<meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+<title>TappOO</title>
+<script id="gameboard-tmpl" type="text/x-handlebars-template">
+	<div class="tappoo-gameboard">
+		<h1>TappOO</h1>
+		<ul>
+		{{#teams}}
+			<li data-id-team="{{id_team}}">
+				<input type="text" value="{{name}}" class="tappoo-team-name" />
+				<span class="tappoo-score">{{score}}</span>
+			</li>
+		{{/teams}}
+		</ul>
+		<button id="tappoo-startgame">
+			Comincia!
+		</button>
+	</div>
+</script>
+<script id="round-tmpl" type="text/x-handlebars-template">
+	<div class="tappoo-round-pre">
+		<h3 class="tappoo-teamname">{{team.name}}</h3>
+		<div class="tappoo-actions">
+			<button id="tappoo-startround">Gioca!</button>
+		</div>
+	</div>
+	<div class="tappoo-round-act" style="display: none">
+		<h3 class="tappoo-teamname">{{team.name}}</h3>
+		<h3 class="tappoo-timer">0:0</h3>
+		<h2 class="tappoo-toguess"></h2>
+		<ul class="tappoo-toavoid"></ul>
+		<div class="tappoo-actions">
+			<button id="tappoo-pass">PASSO</button>
+			<button id="tappoo-done">FATTO</button>
+		</div>
+	</div>
+	<div class="tappoo-round-post" style="display: none">
+		<h3 class="tappoo-teamname">{{team.name}}</h3>
+		<ul class="tappoo-cards"></ul>
+		<div class="tappoo-actions">
+			<button id="tappoo-gonext">Avanti</button>
+		</div>
+	</div>
+</script>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+
+</head>
+<body>
+
+
+
+</body>
+</html>
+        
+

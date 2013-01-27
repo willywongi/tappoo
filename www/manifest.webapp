@@ -1,0 +1,13 @@
+{
+  "name": "TappOO",
+  "description": "Don't say the word",
+  "launch_path": "/index.html",
+  "icons": {
+    "128": "/img/icon-128.png"
+  },
+  "developer": {
+    "name": "Pongi",
+    "url": "pongi@pongi.it"
+  },
+  "fullscreen": "true"
+}
