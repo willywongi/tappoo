@@ -34,40 +34,51 @@ YUI().use("app", "handlebars", function(Y) {
 			this.fire('startGame');
 		}
 	});
-	
-	Y.RoundView = Y.Base.create('RoundView', Y.View, [], {
-		templateFn: getTemplate('#round-tmpl'),
-		render: function() {
-			Y.log("Rendering RoundView");
-			var info = this.get('detail');
-			Y.log(info);
-			this.get('container').setContent(this.templateFn(info));
-		},
+
+	var viewRender = function() {
+		Y.log("Rendering "+this.name);
+		var info = this.get('detail');
+		Y.log(info);
+		this.get('container').setContent(this.templateFn(info));
+	};
+
+	Y.RoundPreView = Y.Base.create('RoundPreView', Y.View, [], {
+		templateFn: getTemplate('#round-pre-tmpl'),
+		render: viewRender,
 		events: {
 			'#tappoo-startround': {
-				'click': 'begin'
-			},
+				'click': '_onStartRound'
+			}			
+		},
+		_onStartRound: function(e) {
+			this.fire('startRound');
+		}
+	});
+	
+	Y.RoundActView = Y.Base.create('RoundActView', Y.View, [], {
+		templateFn: getTemplate('#round-act-tmpl'),
+		render: function() {
+			viewRender.apply(this);
+			this.showNextCard();
+		},
+		events: {
 			'#tappoo-pass': {
-				'click': 'pass'
+				'click': '_onPass'
 			},
 			'#tappoo-done': {
-				'click': 'done'
-			},
-			'#tappoo-gonext': {
-				'click': 'finish'
+				'click': '_onDone'
 			}
 		},
-		showDeck: function(w) {
-			var cnt = this.get('container');
-			Y.Array.each(['pre','post','act'], function(ww) {
-				var node = cnt.one('.tappoo-round-'+ww);
-				if (node) {
-					node.setStyle('display', (ww == w) ? 'block' : 'none');
-				} else {
-					Y.log('Attenzione, nodo "' + '.tappoo-round-'+ ww + '"');
-				}
-			});
+		initializer: function() {
+			/* This class should be discarded and recreated upon every round.
+			*/
+			Y.log(this.name + " initialized");
+			this.on('endCard', function(e) {
+				this.showNextCard();
+			}, this);
 		},
+		_onPass: function(e) { this.fire('endCard', {'score': -1, 'card': this.card}); },
+		_onDone: function(e) { this.fire('endCard', {'score': 1, 'card': this.card}); },
 		showNextCard: function() {
 			var card = getRandomCard(),
 				cnt = this.get('container');
@@ -79,101 +90,117 @@ YUI().use("app", "handlebars", function(Y) {
 				}).join(''));
 			this.card = card.toGuess;
 		},
-		pass: function() {
-			this._result(-1);
+		updateClock: function(s) {
+			// let's cache the access to the timerNode.
+			this._timerNode = this._timerNode || this.get('container').one('.tappoo-timer');
+			this._timerNode.setContent(Y.Lang.sub("{m}:{s}", {
+				'm': parseInt(s / 60, 10),
+				's': s % 60
+			}));
 		},
-		done: function() {
-			this._result(1);
-		},
-		_result: function(score) {
-			var d = this.get('detail');
-			this.results.push({
-					'id_team': d.team.id_team,
-					'word': this.card,
-					'score': score
-				});
-			this.showNextCard();
-			Y.log('Updating results');
-			Y.log(this.results);
-		},
-		begin: function() {
-			var s = 0, t, detail = this.get('detail'),
-				cnt = this.get('container'),
-				timerNode = cnt.one('.tappoo-timer');
-			this.showDeck('act');
-			this.results = [];
-			t = Y.later(1000, this, function() {
-					s++;
-					if (s === detail.duration) {
-						t.cancel();
-						this.end();
-					}
-					timerNode.setContent(Y.Lang.sub("{m}:{s}", {
-								'm': parseInt(s / 60, 10),
-								's': s % 60
-							}));
-				}, [], true);
-			this.showNextCard();
-		
-		},
-		end: function() {
-			this.showDeck('post');
-			var cnt = this.get('container');
-			// mostrare il riepilogo
-			cnt.one('.tappoo-cards').setContent(Y.Array.map(this.results, function(t) {
-					return "<li><label><input type='checkbox' "+((t.score) ? "checked" : "")+">"+t.word+"</label></li>"
-				}).join(''));
-		},
-		finish: function() {
-			
+		setClockUrgency: function(percentage) {
+			/* FIXME
+				update the timerNode class to reveal the urgency of the timer.
+			*/
 		}
 	}, {
 		ATTRS: {
 			detail: {}
 		}
 	});
-	
+
+	Y.RoundPostView = Y.Base.create('RoundPostView', Y.View, [], {
+		templateFn: getTemplate('#round-post-tmpl'),
+		render: viewRender,
+		events: {
+			'.tappoo-gonext': {
+				'click': '_onNext'
+			}
+		},
+		_onNext: function(e) { 
+			var cnt = this.get('container'),
+				score = Y.Array.reduce(cnt.all('.tappoo-cards input[type=checkbox]'), 0, function(p, c) {
+					return (c.get('checked') ? 1 : -1);
+				});
+			this.fire('confirmRound', {score: score});
+		}
+	}, {
+		ATTRS: {
+			detail: {}
+		}
+	});
+
 	
 	Y.GameBoard = Y.Base.create('GameBoard', Y.App, [], {
+		/* This is the App class that works as a main router and event target.
+			Here are the events that it can receive from the views:
+			- teamNameChage
+			- startGame
+			- 
+
+
+		*/
 		initializer: function(cfg) {
 			this.route('/', function() {
-					this.showView('main');
-				}, this);
-			this.on('MainView:startGame', function(e) {
-					// turno 1, squadra 0
-					var rq = [],
-						duration = this.get('duration');
-					for (var t = 0, T = this.get('rounds'); t <T; t++) {
-						Y.Object.each(this.get('teams'), function(team, id_team) {
-							team = Y.merge(team, {'id_team': id_team});
-							rq.push({'round': t, 'team': team, 'duration': duration});
-						});
-					}
-					this._roundQueue = rq;
-					Y.log('Round begins');
-					Y.log(rq);
-					this.fire('nextRound');
-				}, this);
-			this.on('MainView:teamNameChange', function(e) {
-					Y.log('Changing team ('+e.id_team+') name to <'+e.newVal+'>');
-					this.getTeamById(e.id_team)['name'] = e.newVal;
-				}, this);
-			this.publish('nextRound', {
-				defaultFn: this._defNextRoundFn
-			});
-		},
-		_defNextRoundFn: function(e) {
-			var r = this._roundQueue.shift();
-			if (r) {
-				// Ho un round, {round: n, team_id: <id>, duration: msec}
-				// PRE - ACT - POST
-				this.showView('round', {
-						'detail': r
-					});
-			} else {
-				// mostro la pagina iniziale.
 				this.showView('main');
+			}, this);
+			this.on('*:endRound', function(e) {
+				Y.log('Round ends, results:');
+				Y.log(e.results);
+				this.showView('roundPost', {'detail': {results: e.results}});
+			}, this);
+			this.on('MainView:startGame', function(e) {
+				Y.log('Game begins, building rounds queue and showing RoundPreView');
+				this._roundQueue = this.buildRoundsQueue();
+				Y.log(this._roundQueue);
+				this._currentRound = this._roundQueue.shift();
+				this.showView('roundPre', {'detail': this._currentRound});
+			}, this);
+			this.on('RoundPreView:startRound', function(e) {
+				Y.log('Round begins, switching view');
+				var h, s = 0, d = this.get('duration');
+				this.showView('roundAct', {'detail': this._currentRound});
+				this.results = [];
+				// Activating countdown
+				h = Y.later(1000, this, function() {
+					s++;
+					var v = this.get('activeView');
+					v.updateClock(s);
+					if (s === d) {
+						h.cancel();
+						Y.log('Timeout');
+						this.fire('endRound', {'results': this.results});
+					}
+				}, [], true);
+			}, this);
+			this.on('*:endCard', function(e) {
+				var score = e.score,
+					word = e.card;
+				this.results.push({
+						'id_team': this._currentRound.team.id_team,
+						'word': word,
+						'score': score
+					});
+				Y.log('Updating results');
+				Y.log(this.results);
+			});
+			this.on('MainView:teamNameChange', function(e) {
+				Y.log('Changing team ('+e.id_team+') name to <'+e.newVal+'>');
+				this.getTeamById(e.id_team)['name'] = e.newVal;
+			}, this);
+		},
+		buildRoundsQueue: function() {
+			var rq = [],
+				duration = this.get('duration'),
+				teams = this.get('teams'),
+				t = 0, T = this.get('rounds');
+			for (; t <T; t++) {
+				Y.Object.each(teams, function(team, id_team) {
+					team = Y.merge(team, {'id_team': id_team});
+					rq.push({'round': t, 'team': team, 'duration': duration});
+				});
 			}
+			return rq;
 		},
 		getTeamById: function(id_team) {
 			return this.get('teams')[id_team];
@@ -190,9 +217,17 @@ YUI().use("app", "handlebars", function(Y) {
 		    	type: "MainView",
 		    	preserve: true
 		    },
-		    'round': {
-		    	type: "RoundView",
+		    'roundPre': {
+		    	type: "RoundPreView",
+		    	preserve: true
+		    },
+		    'roundAct': {
+		    	type: "RoundActView",
 		    	preserve: false
+		    },
+		    'roundPost': {
+		    	type: "RoundPostView",
+		    	preserve: true
 		    }
 		},
 		

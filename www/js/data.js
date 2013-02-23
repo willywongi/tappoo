@@ -14,6 +14,30 @@ CARDS = [{
 	toGuess: 'albicocco',
 	toAvoid: ['frutta','arancione','susina','pianta','albero'],
 }, {
+	toGuess: 'rimmel',
+	toAvoid: ['trucco','ciglia','cosmetico','allungare','de gregori'],
+}, {
+	toGuess: 'apnea',
+	toAvoid: ['palombaro','immersione','respirare','bombole','sommozzatore'],
+}, {
+	toGuess: 'appello',
+	toAvoid: ['scuola','presente','assente','corte','esame'],
+}, {
+	toGuess: 'arachide',
+	toAvoid: ['nocciolina','americana','superpippo','tostato','olio'],
+}, {
+	toGuess: 'arcipelago',
+	toAvoid: ['antille','isole','gruppo','mare','eolie'],
+}, {
+	toGuess: 'arguto',
+	toAvoid: ['avveduto','fine','ingegnoso','sottile','osservazione'],
+}, {
+	toGuess: 'semolino',
+	toAvoid: ['brodo','minestra','farina','riso','neonato'],
+}, {
+	toGuess: 'arrotino',
+	toAvoid: ['affilare','mestiere','lama','coltello','forbice'],
+}, {
 	toGuess: '',
 	toAvoid: [],
 }];

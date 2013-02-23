@@ -2,7 +2,28 @@
 <html>
 <head>
 <script src="http://yui.yahooapis.com/3.7.3/build/yui/yui-min.js"></script>
-
+<style>
+html, body {
+	position: absolute;
+	background-color: #000;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	padding: 0; margin: 0;
+}
+.yui3-app-views {
+	background-color: #FFFFFF;
+	border-radius: 5px 5px 5px 5px;
+	bottom: 0;
+	left: 0;
+	margin: 0;
+	padding: 0.5em;
+	position: absolute;
+	right: 0;
+	top: 0;
+}
+</style>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <meta name="format-detection" content="telephone=no" />
 <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
@@ -23,14 +44,16 @@
 		</button>
 	</div>
 </script>
-<script id="round-tmpl" type="text/x-handlebars-template">
+<script id="round-pre-tmpl" type="text/x-handlebars-template">
 	<div class="tappoo-round-pre">
 		<h3 class="tappoo-teamname">{{team.name}}</h3>
 		<div class="tappoo-actions">
 			<button id="tappoo-startround">Gioca!</button>
 		</div>
 	</div>
-	<div class="tappoo-round-act" style="display: none">
+</script>
+<script id="round-act-tmpl" type="text/x-handlebars-template">
+	<div class="tappoo-round-act">
 		<h3 class="tappoo-teamname">{{team.name}}</h3>
 		<h3 class="tappoo-timer">0:0</h3>
 		<h2 class="tappoo-toguess"></h2>
@@ -40,9 +63,17 @@
 			<button id="tappoo-done">FATTO</button>
 		</div>
 	</div>
-	<div class="tappoo-round-post" style="display: none">
+</script>
+<script id="round-post-tmpl" type="text/x-handlebars-template">
+	<div class="tappoo-round-post">
 		<h3 class="tappoo-teamname">{{team.name}}</h3>
-		<ul class="tappoo-cards"></ul>
+		<h3 class="tappoo-score"></h3>
+		<ul class="tappoo-cards">
+		{{#results}}
+			<li><label><input type='checkbox' {{#if score}}checked{{/if}}>{{word}}</label></li>
+		{{/results}}
+		</ul>
+
 		<div class="tappoo-actions">
 			<button id="tappoo-gonext">Avanti</button>
 		</div>
